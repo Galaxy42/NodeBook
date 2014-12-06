@@ -1,17 +1,32 @@
-var http = require("http");
+var http = require("http"),
+	path = require("path"),
+	fs = require("fs");
 
 http.createServer(function(req, res) {
-	var html = "<!DOCTYPE html>" +
-		"<html><head><title>Hello World</title></head>" +
-		"<body><h1>Hello, World!</h1></body></html>";
+	function getFile (localPath, res) {
+		fs.readFile(localPath, function(err, contents) {
+			if (!err) {
+				res.end(contents);
+			} else {
+				res.writeHead(500);
+				res.end();
+			}
+		});
+	}
+	var filename = path.basename(req.url) || "index.html",
+		ext = path.extname(filename),
+		localPath = __dirname + "/public/";
 
-	res.writeHead(200, {
-		//Set the type of content we're returning
-		"Context-Type": "text/html",
-		// Set the length of our content
-		"Content-Length": html.length
-	});
+	if (ext == ".html") {
+		localPath += filename;
+		path.exists(localPath, function(exits) {
+			if (exits) {
+				getFile(localPath, res);
+			} else {
+				res.writeHead(404);
+				res.end();
+			}
+		});
+	}
 
-	// End the response, sending it and returning our HTML
-	res.end(html);
-}).listen(8000, "127.0.0.1");
+}).listen(8000);
